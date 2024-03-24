@@ -115,6 +115,7 @@ M.move_to_file = function(delta, options)
 
 	if file ~= nil and file ~= file_before then
 		vim.cmd("edit " .. file)
+		return true
 	end
 
 	return false
