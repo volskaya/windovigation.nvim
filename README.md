@@ -1,5 +1,10 @@
 A plugin that has Neovim windows track their open files and allows switching between them.
 
+# Before / After Preview
+
+https://github.com/volskaya/windovigation.nvim/assets/38878482/be0bd579-ac25-4dc0-ad70-4fc362f2c6ce
+
+
 # Motivation
 
 By default you can't reliably jump backwards to previous buffers, when working with multiple window splits and tabs, because all of your windows keep ordering the same global buffer history.
