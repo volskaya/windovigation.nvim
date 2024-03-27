@@ -19,9 +19,9 @@ M.close_current_file = function()
 	end
 
 	-- Move to the next available file, before cleaning up.
-	local did_move = M.move_to_file(-1, options)
+	local did_move = M.move_to_file(1, options)
 	if not did_move then
-		M.move_to_file(1, options)
+		M.move_to_file(-1, options)
 	end
 
 	if globals.state[key] ~= nil then
