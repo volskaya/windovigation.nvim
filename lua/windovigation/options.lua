@@ -17,6 +17,10 @@ local options = {
 	-- use require("windovigation.actions").persist_state().
 	auto_persist_state = true,
 
+	-- When toggled on, closing a file will switch to the most
+	-- recent entered file, not the recently written file.
+	after_close_file_switch_to_recent = true,
+
 	-- Options for the built in keymaps that get
 	-- reattached to every buffer on enter, to avoid
 	-- lazy loaded packages from stealing them.

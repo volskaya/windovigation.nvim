@@ -1,8 +1,16 @@
----Where the value is the file name.
----@alias WindovigationHistory table<string>
 ---@alias WindovigationKey string
 ---@alias WindovigationBufferTable table<integer, string>
 ---@alias WindovigationState table<WindovigationKey, WindovigationEntry>
+
+---The history class holding 2 lists, one ordered by file entered, and the other by file written.
+---
+---Written history counts as the more important one, that the plugin uses to check if files are
+---scoped or need to be fronted, etc.
+---
+---Entered history are used to determine the next file to switch when closing a file.
+---@class WindovigationHistory
+---@field entered table<string>
+---@field written table<string>
 
 ---@class WindovigationKeyOptions
 ---@field isResursive? boolean
@@ -15,7 +23,7 @@
 ---@field page integer ---Tab number.
 ---@field win integer
 ---@field pane integer ---Window number.
----@field history WindovigationHistory
+---@field histories WindovigationHistory
 
 ---@class WindovigationEvent
 ---@field buf integer
@@ -34,4 +42,5 @@
 ---@class WindovigationOptions
 ---@field auto_restore_state boolean
 ---@field auto_persist_state boolean
+---@field after_close_file_switch_to_recent boolean
 ---@field keymaps? WindovigationKeymapOptions

@@ -76,4 +76,29 @@ M.absolute_path = function(path)
 	return vim.fn.expand(resolved)
 end
 
+---@generic T
+---@param list table<T>
+---@param value T
+---@return integer?
+M.index_of = function(list, value)
+	local index = vim.fn.index(list, value)
+	return index >= 0 and index + 1 or nil
+end
+
+---@generic T
+---@param list table<T>
+---@param value T
+---@return table<T>
+M.append_skipping_existing = function(list, value)
+	local newList = {}
+	---@diagnostic disable-next-line: no-unknown
+	for _, v in ipairs(list) do
+		if v ~= value then
+			table.insert(newList, v)
+		end
+	end
+	table.insert(newList, value)
+	return newList
+end
+
 return M

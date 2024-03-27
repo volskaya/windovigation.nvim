@@ -33,7 +33,7 @@ M.handle_file_entered = function(event)
 	layout.handle_layout_change()
 
 	local entry = globals.state[key]
-	local entry_history = entry.history
+	local entry_histories = entry.histories or { entered = {}, written = {} }
 
 	-- It's possible that on some edge cases there would be a buffer mismatch
 	-- for file, they're ignored.
@@ -43,14 +43,27 @@ M.handle_file_entered = function(event)
 	globals.buffer_file_ids[event.buf] = file
 
 	if not history.is_file_scoped(file, key) then
-		table.insert(entry_history, file)
+		table.insert(entry_histories.entered, file)
+		table.insert(entry_histories.written, file)
 
 		globals.state[key] = {
 			tab = tab,
 			page = page,
 			win = win,
 			pane = pane,
-			history = entry_history,
+			histories = entry_histories,
+		}
+	elseif file ~= entry_histories.entered[#entry_histories.entered] then
+		-- If the file is already scoped, only bump it in the "entered" history.
+		globals.state[key] = {
+			tab = tab,
+			page = page,
+			win = win,
+			pane = pane,
+			histories = {
+				entered = utils.append_skipping_existing(entry_histories.entered, file),
+				written = entry_histories.written,
+			},
 		}
 	end
 end
@@ -133,15 +146,18 @@ M.handle_buf_delete = function(event)
 
 	-- Remove the file from all entries - its buffer is deleted.
 	for key, entry in pairs(globals.state) do
-		local history_new, did_remove = utils.remove_from_table(entry.history, file)
+		local written_new, did_remove = utils.remove_from_table(entry.histories.written, file)
 
 		if did_remove then
 			globals.state[key] = {
-				history = history_new,
 				tab = entry.tab,
 				page = entry.page,
 				win = entry.win,
 				pane = entry.pane,
+				histories = {
+					entered = utils.remove_from_table(entry.histories.entered, file),
+					written = written_new,
+				},
 			}
 		end
 	end

@@ -21,7 +21,7 @@ M.handle_layout_change = function(options)
 
 		window_panes_before[entry.win] = entry.pane
 		tab_pages_before[entry.tab] = entry.page
-		histories_before[key] = entry.history
+		histories_before[key] = entry.histories
 	end
 
 	for _, win in ipairs(wins) do
@@ -29,7 +29,7 @@ M.handle_layout_change = function(options)
 		local page = vim.api.nvim_tabpage_get_number(tab)
 		local pane = vim.api.nvim_win_get_number(win)
 		local key = page .. "_" .. pane
-		local history = {} ---@type WindovigationHistory
+		local histories = { entered = {}, written = {} } ---@type WindovigationHistory
 		local key_old = nil ---@type WindovigationKey?
 
 		if not is_restoring_state then
@@ -48,10 +48,10 @@ M.handle_layout_change = function(options)
 		if key_old ~= nil then
 			local entry_old = state_before[key_old] or nil ---@type WindovigationEntry?
 
-			-- Reusing old history if possible and removing it from
+			-- Reusing old histories if possible and removing it from
 			-- histories_before, so it doesn't get dropped.
 			if entry_old ~= nil and histories_before[key_old] ~= nil then
-				history = histories_before[key_old]
+				histories = histories_before[key_old]
 				histories_before[key_old] = nil
 			end
 		end
@@ -62,7 +62,7 @@ M.handle_layout_change = function(options)
 			page = page,
 			win = win,
 			pane = pane,
-			history = history,
+			histories = histories,
 		}
 	end
 
