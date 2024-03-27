@@ -41,11 +41,11 @@ end
 ---@return boolean
 ---@param options? WindovigationEventRelevantOptions
 M.is_event_relevant = function(event, options)
-	local allow_relative_path = options and options.allow_relative_path or false
+	local allow_relative_path = options and options.allow_relative_path or true
 
 	if not allow_relative_path and event.file ~= nil and event.file:len() > 0 then
 		if event.file:sub(1, 1) ~= "/" then
-			vim.notify("Event file needs an absolute path. " .. event.file, vim.log.levels.WARN)
+			return false
 		end
 	end
 
@@ -67,6 +67,13 @@ M.maybe_close_buffer_for_file = function(file)
 	end
 
 	return didSucceed
+end
+
+---@param path string
+---@return string
+M.absolute_path = function(path)
+	local resolved = vim.fn.resolve(path)
+	return vim.fn.expand(resolved)
 end
 
 return M

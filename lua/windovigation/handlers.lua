@@ -8,12 +8,13 @@ local M = {}
 
 ---@param event WindovigationEvent
 M.handle_file_picked = function(event)
-	if not utils.is_event_relevant(event, { allow_relative_path = true }) then
+	if not utils.is_event_relevant(event) then
 		return
 	end
 
 	local key = history.get_current_key()
-	history.move_to_front(event.file, key)
+	local file = utils.absolute_path(event.file)
+	history.move_to_front(file, key)
 end
 
 ---@param event WindovigationEvent
@@ -26,7 +27,7 @@ M.handle_file_entered = function(event)
 		return
 	end
 
-	local file = event.file
+	local file = utils.absolute_path(event.file)
 	local key, win, tab, pane, page = history.get_current_key()
 
 	layout.handle_layout_change()
@@ -110,7 +111,7 @@ M.handle_buf_created = function(event)
 	end
 
 	local buf = event.buf
-	local file = event.file
+	local file = utils.absolute_path(event.file)
 
 	globals.file_buffer_ids[file] = buf
 	globals.buffer_file_ids[buf] = file
@@ -123,7 +124,7 @@ M.handle_buf_delete = function(event)
 	end
 
 	local buf = event.buf
-	local file = event.file
+	local file = utils.absolute_path(event.file)
 
 	if globals.file_buffer_ids[file] == buf then
 		globals.file_buffer_ids[file] = nil
