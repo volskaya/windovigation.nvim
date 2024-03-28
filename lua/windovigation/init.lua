@@ -67,6 +67,20 @@ local function create_auto_commands(options)
 				file = event.file,
 			})
 		end,
+		TermOpen = function(event)
+			handlers.handle_file_entered({
+				buf = event.buf,
+				tab = vim.api.nvim_get_current_tabpage(),
+				file = event.file,
+			})
+		end,
+		TermEnter = function(event)
+			handlers.handle_file_entered({
+				buf = event.buf,
+				tab = vim.api.nvim_get_current_tabpage(),
+				file = event.file,
+			})
+		end,
 	}
 
 	for command, fn in pairs(auto_commands) do
