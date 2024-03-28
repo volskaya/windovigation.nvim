@@ -98,7 +98,7 @@ M.handle_layout_change = function(options)
 		---@param file string
 		for _, file in ipairs(history) do
 			if files_dropped[file] ~= true then
-				local did_close = utils.maybe_close_buffer_for_file(file)
+				local did_close = utils.maybe_close_buffer_for_file(file, true)
 				if did_close then
 					files_dropped[file] = true
 				end

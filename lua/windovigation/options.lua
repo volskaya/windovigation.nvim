@@ -26,6 +26,15 @@ local options = {
 	-- the Neotree or git diffs.
 	prevent_switching_nofile = true,
 
+	-- Prevents the buffer from closing, when there aren't any
+	-- of our tracked windows still scoping their file.
+	--
+	-- This only respects special buffer types.
+	--
+	-- For example if you wish to stop terminal buffers from
+	-- being closed, set this to {"terminal"}.
+	no_close_buftype = {},
+
 	-- The files, where their path contains one of these values,
 	-- won't be scoped in our history
 	no_scope_filter = {

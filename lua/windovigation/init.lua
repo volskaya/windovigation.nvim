@@ -115,6 +115,7 @@ local function is_options_valid(options)
 	local isValid = pcall(vim.validate, {
 		auto_persist_state = { options.auto_persist_state, "boolean" },
 		auto_restore_state = { options.auto_restore_state, "boolean" },
+		prevent_switching_nofile = { options.prevent_switching_nofile, "boolean" },
 		keymaps = {
 			options.keymaps,
 			function(value)
@@ -126,6 +127,56 @@ local function is_options_valid(options)
 					bracket_movement_key = { value.bracket_movement_key, "string" },
 					buffer_close_key = { value.buffer_close_key, "string" },
 				})
+
+				return true
+			end,
+			"WindowvigationKeymapOptions",
+		},
+		no_scope_filter = {
+			options.no_scope_filter,
+			function(value)
+				if type(value) ~= "table" then
+					return false
+				end
+
+				---@diagnostic disable-next-line: no-unknown
+				for i, v in ipairs(value) do
+					if type(i) ~= "number" or type(v) ~= "string" then
+						return false
+					end
+				end
+
+				return true
+			end,
+			"WindowvigationKeymapOptions",
+		},
+		no_close_buftype = {
+			options.no_close_buftype,
+			function(value)
+				if type(value) ~= "table" then
+					return false
+				end
+
+				local allowed_values = {
+					acwrite = true,
+					help = true,
+					nofile = true,
+					nowrite = true,
+					quickfix = true,
+					terminal = true,
+					prompt = true,
+				} ---@type table<SpecialBufferType>
+
+				---@diagnostic disable-next-line: no-unknown
+				for i, v in ipairs(value) do
+					if type(i) ~= "number" or type(v) ~= "string" then
+						return false
+					end
+
+					if not allowed_values[v] then
+						return false
+					end
+				end
 
 				return true
 			end,
@@ -152,6 +203,12 @@ M.setup = function(options)
 
 	-- Add hidden options.
 	globals.hidden_options.no_scope_filter_patterns = vim.tbl_map(vim.fn.glob2regpat, effective_options.no_scope_filter)
+	globals.hidden_options.no_close_buftype_map = {}
+
+	---@diagnostic disable-next-line: no-unknown
+	for _, v in ipairs(effective_options.no_close_buftype) do
+		globals.hidden_options.no_close_buftype_map[v] = true
+	end
 
 	create_user_commands(effective_options)
 	create_auto_commands(effective_options)

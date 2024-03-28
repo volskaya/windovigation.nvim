@@ -43,7 +43,7 @@ M.close_current_file = function()
 
 	-- This action can be used on buffers we don't manage with our file histories.
 	if file == nil or buftype == "nofile" then
-		if not pcall(vim.cmd.bdelete, { buf, bang = false }) then
+		if not utils.maybe_close_buffer_for_file(buf, false) then
 			-- Make sure we're back on buf, if bdelete didn't close any buffers.
 			vim.api.nvim_win_set_buf(win, buf)
 		end
@@ -66,14 +66,14 @@ M.close_current_file = function()
 		}
 
 		-- Close the window as there are no more files in this history.
-		if #histories_after.written == 0 and file ~= nil then
+		if #histories_after.written == 0 then
 			pcall(vim.api.nvim_win_close, win, false) -- Closing last window will fail silently.
 		end
 	else
 		-- Proceeding to close a file without state.
 	end
 
-	utils.maybe_close_buffer_for_file(file)
+	utils.maybe_close_buffer_for_file(file, true)
 end
 
 ---@param key_options? WindovigationKeyOptions
