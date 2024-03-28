@@ -175,7 +175,28 @@ M.restore_state = function()
 end
 
 M.persist_state = function()
-	vim.g.WindovigationState = vim.json.encode(globals.state)
+	local state_clean = {} ---@type WindovigationState
+	local filter_term = function(v)
+		return not vim.startswith(v, "term://")
+	end
+
+	for key, entry in pairs(globals.state) do
+		local histories_clean = {
+			-- Remove term:// files from history - nvim doesn't restore terminals.
+			entered = vim.tbl_filter(filter_term, entry.histories.entered),
+			written = vim.tbl_filter(filter_term, entry.histories.written),
+		} ---@type WindovigationHistory
+
+		state_clean[key] = {
+			tab = entry.tab,
+			page = entry.page,
+			win = entry.win,
+			pane = entry.pane,
+			histories = histories_clean,
+		} ---@type WindovigationEntry
+	end
+
+	vim.g.WindovigationState = vim.json.encode(state_clean)
 end
 
 return M
