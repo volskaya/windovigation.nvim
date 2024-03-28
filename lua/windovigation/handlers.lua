@@ -32,15 +32,21 @@ M.handle_file_entered = function(event)
 
 	layout.handle_layout_change()
 
-	local entry = globals.state[key]
-	local entry_histories = entry.histories or { entered = {}, written = {} }
-
-	-- It's possible that on some edge cases there would be a buffer mismatch
-	-- for file, they're ignored.
-
 	-- Always keep the buffer id up to date.
 	globals.file_buffer_ids[file] = event.buf
 	globals.buffer_file_ids[event.buf] = file
+
+	-- Handle the no_scope_filter before scoping the file.
+	--
+	---@param value string
+	for _, value in ipairs(globals.hidden_options.no_scope_filter_patterns or {}) do
+		if string.match(file, value) ~= nil then
+			return
+		end
+	end
+
+	local entry = globals.state[key]
+	local entry_histories = entry.histories or { entered = {}, written = {} }
 
 	if not history.is_file_scoped(file, key) then
 		table.insert(entry_histories.entered, file)

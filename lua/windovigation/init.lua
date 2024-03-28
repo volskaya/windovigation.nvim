@@ -1,5 +1,6 @@
 local actions = require("windovigation.actions")
 local default_options = require("windovigation.options")
+local globals = require("windovigation.globals")
 local handlers = require("windovigation.handlers")
 
 local M = {}
@@ -136,6 +137,9 @@ M.setup = function(options)
 	else
 		vim.notify("Windovigation user options failed validation, proceeding with defaults.", vim.log.levels.WARN)
 	end
+
+	-- Add hidden options.
+	globals.hidden_options.no_scope_filter_patterns = vim.tbl_map(vim.fn.glob2regpat, effective_options.no_scope_filter)
 
 	create_user_commands(effective_options)
 	create_auto_commands(effective_options)

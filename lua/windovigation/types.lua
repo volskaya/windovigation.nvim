@@ -44,4 +44,8 @@
 ---@field auto_persist_state boolean
 ---@field after_close_file_switch_to_recent boolean
 ---@field prevent_switching_nofile boolean
+---@field no_scope_filter table<string>
 ---@field keymaps? WindovigationKeymapOptions
+
+---@class WindovigationHiddenOptions
+---@field no_scope_filter_patterns? table<string>
