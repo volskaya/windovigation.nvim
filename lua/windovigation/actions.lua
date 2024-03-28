@@ -88,6 +88,7 @@ end
 M.move_to_file = function(delta, options)
 	local key = history.get_current_key(options)
 	local buf = options and options.buf or vim.api.nvim_get_current_buf()
+	local buf_type = vim.bo[buf].buftype
 	local entry = globals.state[key]
 
 	-- Key has no state, there's nothing to move through.
@@ -105,25 +106,41 @@ M.move_to_file = function(delta, options)
 		index = utils.index_of(entry_histories.written, file)
 	end
 
+	local try_previous_first = false
+	local did_find_previous_index = false
+
+	-- Buffers of "nofile" aren't meant to be in the history, so it doesn't make
+	-- sense to use them as the middle file for backward / forward switch.
+	if buf_type == "nofile" then
+		try_previous_first = true
+	end
+
 	-- Recalculate the next index.
-	if delta == "previous" then
+	if delta == "previous" or try_previous_first then
 		-- Iterate in reverse and find the last entered file we can switch to.
 		for i = #entry.histories.entered, 1, -1 do
 			local entered_file = entry.histories.entered[i] ---@type string?
 			if entered_file ~= nil and entered_file ~= file then
 				-- Find the file in the written history. If it doesn't exist there, don't switch to it.
 				index = utils.index_of(entry_histories.written, entered_file)
+				did_find_previous_index = true
 				break
 			end
 		end
-	elseif delta == "first" then
-		index = 1
-	elseif delta == "last" then
-		index = #entry_histories.written
-	elseif index == nil then
-		index = delta <= 0 and #entry_histories.written or 1
-	else
-		index = index + delta
+	end
+
+	if not did_find_previous_index then
+		if delta == "previous" then
+		-- The "previous" handling above didn't find anything, have this pass through to other cases.
+		elseif delta == "first" then
+			index = 1
+		elseif delta == "last" then
+			index = #entry_histories.written
+		elseif index == nil then
+			index = delta <= 0 and #entry_histories.written or 1
+		else
+			index = index + delta
+		end
 	end
 
 	-- After recalculating the next index, we should have the next file.
