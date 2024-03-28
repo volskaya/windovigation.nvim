@@ -1,9 +1,21 @@
 local globals = require("windovigation.globals")
+local options = require("windovigation.options")
 local history = require("windovigation.history")
 local layout = require("windovigation.layout")
 local utils = require("windovigation.utils")
 
 local M = {}
+
+---@param key_options? WindovigationKeyOptions
+---@return boolean
+local function is_user_move_action_allowed(key_options)
+	local buf = key_options and key_options.buf or vim.api.nvim_get_current_buf()
+	local buftype = vim.bo[buf].buftype
+	if options.prevent_switching_nofile and buftype == "nofile" then
+		return false
+	end
+	return true
+end
 
 ---Closes the active file and destroys its buffer,
 ---if no other window has this file open.
@@ -12,23 +24,16 @@ M.close_current_file = function()
 	local buf = vim.api.nvim_get_current_buf()
 	local file = globals.buffer_file_ids[buf]
 	local entry = globals.state[key]
-	local options = { buf = buf, win = win, tab = tab } ---@type WindovigationKeyOptions
+	local key_options = { buf = buf, win = win, tab = tab } ---@type WindovigationKeyOptions
 
 	if file == nil then
 		pcall(vim.api.nvim_buf_delete, buf, { force = false })
 		return -- There's nothing to close.
 	end
 
-	-- Move to the next available file, before cleaning up.
-	-- local did_move = M.move_to_file(1, options)
-	-- if not did_move then
-	-- 	M.move_to_file(-1, options)
-	-- end
-
 	for _, delta in ipairs({ "previous", 1, -1 }) do
-		local didMove = M.move_to_file(delta, options)
-		if didMove then
-			break
+		if M.move_to_file(delta, key_options) then
+			break -- Did move.
 		end
 	end
 
@@ -58,36 +63,41 @@ M.close_current_file = function()
 	utils.maybe_close_buffer_for_file(file)
 end
 
----@param options? WindovigationKeyOptions
+---@param key_options? WindovigationKeyOptions
 ---@return boolean
-M.move_to_last_file = function(options)
-	return M.move_to_file("last", options)
+M.move_to_last_file = function(key_options)
+	return is_user_move_action_allowed(key_options) and M.move_to_file("last", key_options) or false
 end
 
----@param options? WindovigationKeyOptions
+---@param key_options? WindovigationKeyOptions
 ---@return boolean
-M.move_to_first_file = function(options)
-	return M.move_to_file("first", options)
+M.move_to_first_file = function(key_options)
+	return is_user_move_action_allowed(key_options) and M.move_to_file("first", key_options) or false
 end
 
----@param options? WindovigationKeyOptions
+---@param key_options? WindovigationKeyOptions
 ---@return boolean
-M.move_to_previous_file = function(options)
-	return M.move_to_file(-1, options)
+M.move_to_previous_file = function(key_options)
+	return is_user_move_action_allowed(key_options) and M.move_to_file(-1, key_options) or false
 end
 
----@param options? WindovigationKeyOptions
+---@param key_options? WindovigationKeyOptions
 ---@return boolean
-M.move_to_next_file = function(options)
-	return M.move_to_file(1, options)
+M.move_to_next_file = function(key_options)
+	return is_user_move_action_allowed(key_options) and M.move_to_file(1, key_options) or false
 end
 
+---Moves to the next file in the active history.
+---
+---Unlike the other "move_" actions, this call intentionally
+---ignores is_user_move_action_allowed.
+---
 ---@param delta integer | "first" | "last" | "previous"
----@param options? WindovigationKeyOptions
+---@param key_options? WindovigationKeyOptions
 ---@return boolean
-M.move_to_file = function(delta, options)
-	local key = history.get_current_key(options)
-	local buf = options and options.buf or vim.api.nvim_get_current_buf()
+M.move_to_file = function(delta, key_options)
+	local key = history.get_current_key(key_options)
+	local buf = key_options and key_options.buf or vim.api.nvim_get_current_buf()
 	local buf_type = vim.bo[buf].buftype
 	local entry = globals.state[key]
 

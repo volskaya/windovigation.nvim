@@ -21,6 +21,11 @@ local options = {
 	-- recent entered file, not the recently written file.
 	after_close_file_switch_to_recent = true,
 
+	-- Prevents the move actions from working when the current
+	-- buffer type is nofile, that's usually on buffers like
+	-- the Neotree or git diffs.
+	prevent_switching_nofile = true,
+
 	-- Options for the built in keymaps that get
 	-- reattached to every buffer on enter, to avoid
 	-- lazy loaded packages from stealing them.

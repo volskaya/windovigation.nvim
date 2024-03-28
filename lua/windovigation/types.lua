@@ -43,4 +43,5 @@
 ---@field auto_restore_state boolean
 ---@field auto_persist_state boolean
 ---@field after_close_file_switch_to_recent boolean
+---@field prevent_switching_nofile boolean
 ---@field keymaps? WindovigationKeymapOptions
