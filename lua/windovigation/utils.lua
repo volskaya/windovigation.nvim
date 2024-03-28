@@ -54,20 +54,12 @@ M.is_event_relevant = function(event, options)
 end
 
 ---@param file string
----@return boolean
+---@return boolean -- True if the buffer was closed.
 M.maybe_close_buffer_for_file = function(file)
-	local didSucceed = false
-	local buf = globals.file_buffer_ids[file]
-
-	if buf == nil then
-		return false
-	end
-
 	if not history.is_file_scoped(file) then
-		didSucceed = pcall(vim.api.nvim_buf_delete, buf, { force = true })
+		return pcall(vim.cmd.bdelete, { file, bang = true })
 	end
-
-	return didSucceed
+	return false
 end
 
 ---@param buf integer
