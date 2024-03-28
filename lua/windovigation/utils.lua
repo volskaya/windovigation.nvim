@@ -42,6 +42,7 @@ end
 ---@param options? WindovigationEventRelevantOptions
 M.is_event_relevant = function(event, options)
 	local allow_relative_path = options and options.allow_relative_path or true
+	local buftype = event.buf and vim.bo[event.buf].buftype or nil
 
 	if not allow_relative_path and event.file ~= nil and event.file:len() > 0 then
 		if event.file:sub(1, 1) ~= "/" then
@@ -49,7 +50,7 @@ M.is_event_relevant = function(event, options)
 		end
 	end
 
-	return event.buf ~= nil and event.file ~= nil and event.file:len() > 0
+	return event.buf ~= nil and buftype ~= "nofile" and event.file ~= nil and event.file:len() > 0
 end
 
 ---@param file string

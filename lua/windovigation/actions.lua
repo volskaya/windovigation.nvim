@@ -22,19 +22,32 @@ end
 M.close_current_file = function()
 	local key, win, tab = history.get_current_key()
 	local buf = vim.api.nvim_get_current_buf()
+	local buftype = vim.bo[buf].buftype
 	local file = globals.buffer_file_ids[buf]
 	local entry = globals.state[key]
 	local key_options = { buf = buf, win = win, tab = tab } ---@type WindovigationKeyOptions
 
-	if file == nil then
-		pcall(vim.api.nvim_buf_delete, buf, { force = false })
-		return -- There's nothing to close.
+	-- TODO: Ask to save changes before killing the buffer.
+
+	-- Move to the next available file, before cleaning up.
+	--
+	-- Skip this for nofile buffers, since they usually have their own
+	-- behavior for when :bdelete happens. Keep an eye on this though for weird behavior.
+	if buftype ~= "nofile" then
+		for _, delta in ipairs({ "previous", 1, -1 }) do
+			if M.move_to_file(delta, key_options) then
+				break -- Did move.
+			end
+		end
 	end
 
-	for _, delta in ipairs({ "previous", 1, -1 }) do
-		if M.move_to_file(delta, key_options) then
-			break -- Did move.
+	-- This action can be used on buffers we don't manage with our file histories.
+	if file == nil or buftype == "nofile" then
+		if not pcall(vim.cmd.bdelete, { buf, bang = false }) then
+			-- Make sure we're back on buf, if bdelete didn't close any buffers.
+			vim.api.nvim_win_set_buf(win, buf)
 		end
+		return
 	end
 
 	if entry ~= nil then

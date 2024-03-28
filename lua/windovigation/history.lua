@@ -9,8 +9,8 @@ local M = {}
 ---@return integer
 ---@return integer
 M.get_current_key = function(options)
-	local win = (options ~= nil and options.win ~= nil) and options.win or vim.api.nvim_get_current_win()
-	local tab = (options ~= nil and options.tab ~= nil) and options.tab or vim.api.nvim_win_get_tabpage(win)
+	local win = options and options.win or vim.api.nvim_get_current_win()
+	local tab = options and options.tab or vim.api.nvim_win_get_tabpage(win)
 	local page = vim.api.nvim_tabpage_get_number(tab)
 	local pane = vim.api.nvim_win_get_number(win)
 
