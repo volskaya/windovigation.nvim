@@ -130,7 +130,19 @@ M.move_to_file = function(delta, options)
 	file = entry_histories.written[index] ---@type string?
 
 	if file ~= nil and file ~= file_before then
-		vim.cmd("edit " .. file)
+		local buffer = globals.file_buffer_ids[file]
+		-- TODO: If our cache returns nil, iterate over all buffers and try to match one by their current file name.
+
+		if buffer ~= nil then
+			vim.api.nvim_set_current_buf(buffer)
+		else
+			-- Fallback to :edit.
+			--
+			-- This won't be enough to switch to a file in a special buffer
+			-- and will open an empty file, but this way the user isn't
+			-- blocked from switching due to an unaccounted buffer id.
+			vim.cmd("edit " .. file)
+		end
 		return true
 	end
 
