@@ -2,6 +2,7 @@ local actions = require("windovigation.actions")
 local default_options = require("windovigation.options")
 local globals = require("windovigation.globals")
 local handlers = require("windovigation.handlers")
+local utils = require("windovigation.utils")
 
 local M = {}
 local group = vim.api.nvim_create_augroup("Windovigation", { clear = true })
@@ -41,45 +42,56 @@ local function create_auto_commands(options)
 			actions.persist_state()
 		end or nil,
 		WinEnter = function(event)
-			handlers.handle_file_entered(event)
+			handlers.handle_file_entered({ buf = event.buf, file = utils.buf_get_name_or_empty(event.buf) })
 		end,
 		WinClosed = function(event)
-			handlers.handle_win_closed(event, { win = tonumber(event.match) or -1 })
+			handlers.handle_win_closed(
+				{ buf = event.buf, file = utils.buf_get_name_or_empty(event.buf) },
+				{ win = tonumber(event.match) or -1 }
+			)
 		end,
 		WinNew = function(event)
-			handlers.handle_win_new(event)
+			handlers.handle_win_new({ buf = event.buf, file = utils.buf_get_name_or_empty(event.buf) })
 		end,
 		TabNew = function(event)
-			handlers.handle_tab_new(event, vim.api.nvim_get_current_tabpage())
+			handlers.handle_tab_new({
+				buf = event.buf,
+				file = utils.buf_get_name_or_empty(event.buf),
+			}, vim.api.nvim_get_current_tabpage())
 		end,
 		TabClosed = function(event)
-			handlers.handle_tab_closed(event, { tab = tonumber(event.match) or -1 })
+			handlers.handle_tab_closed({
+				buf = event.buf,
+				file = utils.buf_get_name_or_empty(event.buf),
+			}, {
+				tab = tonumber(event.match) or -1,
+			})
 		end,
 		BufCreate = function(event)
-			handlers.handle_buf_created({ buf = event.buf, file = event.match })
+			handlers.handle_buf_created({ buf = event.buf, file = utils.buf_get_name_or_empty(event.buf) })
 		end,
 		BufWritePost = function(event)
-			handlers.handle_file_written({ buf = event.buf, file = event.match })
+			handlers.handle_file_written({ buf = event.buf, file = utils.buf_get_name_or_empty(event.buf) })
 		end,
 		BufEnter = function(event)
 			handlers.handle_file_entered({
 				buf = event.buf,
 				tab = vim.api.nvim_get_current_tabpage(),
-				file = event.file,
+				file = utils.buf_get_name_or_empty(event.buf),
 			})
 		end,
 		TermOpen = function(event)
 			handlers.handle_file_entered({
 				buf = event.buf,
 				tab = vim.api.nvim_get_current_tabpage(),
-				file = event.file,
+				file = utils.buf_get_name_or_empty(event.buf),
 			})
 		end,
 		TermEnter = function(event)
 			handlers.handle_file_entered({
 				buf = event.buf,
 				tab = vim.api.nvim_get_current_tabpage(),
-				file = event.file,
+				file = utils.buf_get_name_or_empty(event.buf),
 			})
 		end,
 	}

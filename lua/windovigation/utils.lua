@@ -69,6 +69,17 @@ M.maybe_close_buffer_for_file = function(file)
 	return didSucceed
 end
 
+---@param buf integer
+---@return string
+M.buf_get_name_or_empty = function(buf)
+	-- Not sure if this can throw, just being careful here in case a buffer has no name.
+	local did_succeed, name = pcall(vim.api.nvim_buf_get_name, buf)
+	if did_succeed then
+		return name or ""
+	end
+	return ""
+end
+
 ---@param path string
 ---@return string
 M.absolute_path = function(path)

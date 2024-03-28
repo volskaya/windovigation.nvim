@@ -12,8 +12,10 @@ M.handle_file_picked = function(event)
 		return
 	end
 
+	-- INFO: Should we have some special handling here for relative paths a picker might pass in?
+	local file = event.file
 	local key = history.get_current_key()
-	local file = utils.absolute_path(event.file)
+
 	history.move_to_front(file, key)
 end
 
@@ -27,7 +29,7 @@ M.handle_file_entered = function(event)
 		return
 	end
 
-	local file = utils.absolute_path(event.file)
+	local file = event.file
 	local key, win, tab, pane, page = history.get_current_key()
 
 	layout.handle_layout_change()
@@ -130,7 +132,7 @@ M.handle_buf_created = function(event)
 	end
 
 	local buf = event.buf
-	local file = utils.absolute_path(event.file)
+	local file = event.file
 
 	globals.file_buffer_ids[file] = buf
 	globals.buffer_file_ids[buf] = file
@@ -143,7 +145,7 @@ M.handle_buf_delete = function(event)
 	end
 
 	local buf = event.buf
-	local file = utils.absolute_path(event.file)
+	local file = event.file
 
 	if globals.file_buffer_ids[file] == buf then
 		globals.file_buffer_ids[file] = nil
