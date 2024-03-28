@@ -24,6 +24,17 @@ M.handle_layout_change = function(options)
 		histories_before[key] = entry.histories
 	end
 
+	local restored_file_buffers = {} ---@type table<string, integer>
+
+	-- We need to prepare restored file buffers so we know which files
+	-- in our history didn't get restored.
+	if is_restoring_state then
+		for _, buf in ipairs(vim.api.nvim_list_bufs()) do
+			local buf_name = vim.api.nvim_buf_get_name(buf)
+			restored_file_buffers[buf_name] = buf
+		end
+	end
+
 	for _, win in ipairs(wins) do
 		local tab = vim.api.nvim_win_get_tabpage(win)
 		local page = vim.api.nvim_tabpage_get_number(tab)
@@ -54,6 +65,20 @@ M.handle_layout_change = function(options)
 				histories = histories_before[key_old]
 				histories_before[key_old] = nil
 			end
+		end
+
+		-- Filter out buffer names that didn't get restored.
+		--
+		-- For example nvim session restore doesn't restore terminals.
+		if is_restoring_state then
+			local filter = function(value)
+				return restored_file_buffers[value] ~= nil
+			end
+
+			histories = {
+				entered = vim.tbl_filter(filter, histories.entered),
+				written = vim.tbl_filter(filter, histories.written),
+			}
 		end
 
 		--- @type WindovigationEntry
