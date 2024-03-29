@@ -23,7 +23,7 @@ M.close_current_file = function()
 	local key, win, tab = history.get_current_key()
 	local buf = vim.api.nvim_get_current_buf()
 	local buftype = vim.bo[buf].buftype
-	local file = globals.buffer_file_ids[buf]
+	local file = utils.buf_get_name_or_nil(buf)
 	local entry = globals.state[key]
 	local key_options = { buf = buf, win = win, tab = tab } ---@type WindovigationKeyOptions
 
@@ -123,7 +123,7 @@ M.move_to_file = function(delta, key_options)
 	-- needing to be removed from the history.
 	while #globals.state[key].histories.written > 0 do
 		local entry = globals.state[key]
-		local file = globals.buffer_file_ids[buf]
+		local file = utils.buf_get_name_or_nil(buf)
 		local file_before = file
 		local entry_histories = entry and entry.histories or { written = {}, entered = {} }
 		local index = nil
