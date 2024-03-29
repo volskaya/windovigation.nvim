@@ -22,13 +22,11 @@ end
 ---@param history string[]
 ---@return boolean
 M.is_file_scoped_in_history = function(file, history)
-	local is_absolute_path = file:sub(1) == "/"
-	local file_length = file:len()
+	local is_absolute_path = vim.startswith(file, "/")
 
 	for _, v in ipairs(history) do
-		local is_match = is_absolute_path and v == file or string.sub(v, -file_length, -1) == file
+		local is_match = is_absolute_path and v == file or vim.endswith(v, file)
 		if is_match then
-			-- if v == file then
 			return true
 		end
 	end

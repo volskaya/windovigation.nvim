@@ -108,6 +108,24 @@ M.handle_layout_change = function(options)
 
 	globals.state = state_after
 
+	-- HACK: The drop is delayed 1 second, to allow
+	-- nvim to handle autocommands and update its layout.
+	--
+	-- So when the drop checks whether the buffer is still
+	-- scoped somewhere, it can correctly check renamed files.
+	--
+	-- We don't care if the files are actually dropped, this
+	-- is just a clean up utility for when they go out of scope.
+	--
+	-- If the user returns to a file that was marked for a drop,
+	-- it won't be dropped because it'd be scoped back in already.
+	vim.defer_fn(function()
+		M.drop_histories(histories_before)
+	end, 1000)
+end
+
+---@param histories_before table<WindovigationKey, WindovigationHistory>
+M.drop_histories = function(histories_before)
 	local files_dropped = {} ---@type table<string, boolean>
 	for _, history_before in pairs(histories_before) do
 		for _, file in ipairs(history_before.written or {}) do
