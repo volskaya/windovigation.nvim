@@ -34,10 +34,6 @@ M.handle_file_entered = function(event)
 
 	layout.handle_layout_change()
 
-	-- Always keep the buffer id up to date.
-	globals.file_buffer_ids[file] = event.buf
-	globals.buffer_file_ids[event.buf] = file
-
 	-- Handle the no_scope_filter before scoping the file.
 	for _, value in ipairs(globals.hidden_options.no_scope_filter_patterns or {}) do
 		if string.match(file, value) ~= nil then
@@ -125,15 +121,7 @@ end
 
 ---@param event WindovigationEvent
 M.handle_buf_created = function(event)
-	if not utils.is_event_relevant(event) then
-		return
-	end
-
-	local buf = event.buf
-	local file = event.file
-
-	globals.file_buffer_ids[file] = buf
-	globals.buffer_file_ids[buf] = file
+	-- We're not handling anything here anymore.
 end
 
 ---@param event WindovigationEvent
@@ -142,15 +130,7 @@ M.handle_buf_delete = function(event)
 		return
 	end
 
-	local buf = event.buf
-	local file = event.file
-
-	if globals.file_buffer_ids[file] == buf then
-		globals.file_buffer_ids[file] = nil
-		globals.buffer_file_ids[buf] = nil
-	end
-
-	history.unscope_file(file)
+	history.unscope_file(event.file)
 end
 
 return M

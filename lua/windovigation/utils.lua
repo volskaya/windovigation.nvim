@@ -71,6 +71,16 @@ M.buf_get_name_or_empty = function(buf)
 	return ""
 end
 
+---@param buf integer
+---@return string?
+M.buf_get_name_or_nil = function(buf)
+	-- Not sure if this can throw, just being careful here in case a buffer has no name.
+	local did_succeed, name = pcall(vim.api.nvim_buf_get_name, buf)
+	if did_succeed then
+		return name
+	end
+end
+
 ---@param path string
 ---@return string
 M.absolute_path = function(path)
