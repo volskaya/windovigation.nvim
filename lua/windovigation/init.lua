@@ -1,5 +1,5 @@
 local actions = require("windovigation.actions")
-local default_options = require("windovigation.options")
+local options = require("windovigation.options")
 local globals = require("windovigation.globals")
 local handlers = require("windovigation.handlers")
 local utils = require("windovigation.utils")
@@ -7,8 +7,7 @@ local utils = require("windovigation.utils")
 local M = {}
 local group = vim.api.nvim_create_augroup("Windovigation", { clear = true })
 
----@param options WindovigationOptions
-local function create_user_commands(options)
+local function create_user_commands()
 	local user_commands = {
 		WindovigationPreviousFile = function()
 			actions.move_to_file(-1)
@@ -32,8 +31,7 @@ local function create_user_commands(options)
 	end
 end
 
----@param options WindovigationOptions
-local function create_auto_commands(options)
+local function create_auto_commands()
 	local auto_commands = {
 		SessionLoadPost = options.auto_restore_state and function()
 			actions.restore_state()
@@ -109,15 +107,15 @@ local function create_auto_commands(options)
 	end
 end
 
----@param options WindovigationOptions
+---@param user_options WindovigationOptions
 ---@return boolean
-local function is_options_valid(options)
+local function is_options_valid(user_options)
 	local isValid = pcall(vim.validate, {
-		auto_persist_state = { options.auto_persist_state, "boolean" },
-		auto_restore_state = { options.auto_restore_state, "boolean" },
-		prevent_switching_nofile = { options.prevent_switching_nofile, "boolean" },
+		auto_persist_state = { user_options.auto_persist_state, "boolean" },
+		auto_restore_state = { user_options.auto_restore_state, "boolean" },
+		prevent_switching_nofile = { user_options.prevent_switching_nofile, "boolean" },
 		keymaps = {
-			options.keymaps,
+			user_options.keymaps,
 			function(value)
 				if value == nil then
 					return true
@@ -133,7 +131,7 @@ local function is_options_valid(options)
 			"WindowvigationKeymapOptions",
 		},
 		no_scope_filter = {
-			options.no_scope_filter,
+			user_options.no_scope_filter,
 			function(value)
 				if type(value) ~= "table" then
 					return false
@@ -151,7 +149,7 @@ local function is_options_valid(options)
 			"WindowvigationKeymapOptions",
 		},
 		no_close_buftype = {
-			options.no_close_buftype,
+			user_options.no_close_buftype,
 			function(value)
 				if type(value) ~= "table" then
 					return false
@@ -187,15 +185,15 @@ local function is_options_valid(options)
 	return isValid
 end
 
----@param options? WindovigationOptions
-M.setup = function(options)
-	local effective_options = vim.tbl_deep_extend("force", default_options, options or {})
+---@param opts? WindovigationOptions
+M.setup = function(opts)
+	local effective_options = vim.tbl_deep_extend("force", options, opts or {})
 	local is_effective_options_valid = is_options_valid(effective_options)
 
 	-- Update our options with the user options, if they're valid.
 	if is_effective_options_valid then
 		for key, value in pairs(effective_options) do
-			default_options[key] = value
+			options[key] = value
 		end
 	else
 		vim.notify("Windovigation user options failed validation, proceeding with defaults.", vim.log.levels.WARN)
@@ -203,15 +201,10 @@ M.setup = function(options)
 
 	-- Add hidden options.
 	globals.hidden_options.no_scope_filter_patterns = vim.tbl_map(vim.fn.glob2regpat, effective_options.no_scope_filter)
-	globals.hidden_options.no_close_buftype_map = {}
+	globals.hidden_options.no_close_buftype_map = utils.list_to_set(effective_options.no_close_buftype)
 
-	---@diagnostic disable-next-line: no-unknown
-	for _, v in ipairs(effective_options.no_close_buftype) do
-		globals.hidden_options.no_close_buftype_map[v] = true
-	end
-
-	create_user_commands(effective_options)
-	create_auto_commands(effective_options)
+	create_user_commands()
+	create_auto_commands()
 end
 
 return M

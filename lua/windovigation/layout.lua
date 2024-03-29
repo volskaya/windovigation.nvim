@@ -93,10 +93,9 @@ M.handle_layout_change = function(options)
 
 	globals.state = state_after
 
-	local files_dropped = {} ---@type table<string,boolean>
+	local files_dropped = {} ---@type table<string, boolean>
 	for _, history_before in pairs(histories_before) do
-		---@param file string
-		for _, file in ipairs(history_before) do
+		for _, file in ipairs(history_before.written) do
 			if files_dropped[file] ~= true then
 				local did_close = history.maybe_close_buffer_for_file(file, true)
 				if did_close then

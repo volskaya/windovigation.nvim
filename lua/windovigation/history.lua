@@ -19,13 +19,12 @@ M.get_current_key = function(options)
 end
 
 ---@param file string
----@param history WindovigationHistory
+---@param history string[]
 ---@return boolean
 M.is_file_scoped_in_history = function(file, history)
 	local is_absolute_path = file:sub(1) == "/"
 	local file_length = file:len()
 
-	---@param v string
 	for _, v in ipairs(history) do
 		local is_match = is_absolute_path and v == file or string.sub(v, -file_length, -1) == file
 		if is_match then
@@ -81,14 +80,13 @@ M.move_to_front = function(file, key)
 		return -- No need to rebuild the table - file is already at the front.
 	end
 
-	---@param v string
 	for _, v in ipairs(entry_old.histories.written) do
 		local is_match = is_absolute_path and v == file or string.sub(v, -file_length, -1) == file
 
 		if not is_match then
 			table.insert(histories_new.written, v)
 		elseif fronted_file_name == nil then
-			fronted_file_name = v ---@type string
+			fronted_file_name = v
 		end
 	end
 

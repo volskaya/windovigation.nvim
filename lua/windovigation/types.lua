@@ -12,8 +12,8 @@
 ---
 ---Entered history are used to determine the next file to switch when closing a file.
 ---@class WindovigationHistory
----@field entered table<string>
----@field written table<string>
+---@field entered string[]
+---@field written string[]
 
 ---@class WindovigationKeyOptions
 ---@field isResursive? boolean
@@ -47,10 +47,10 @@
 ---@field auto_persist_state boolean
 ---@field after_close_file_switch_to_recent boolean
 ---@field prevent_switching_nofile boolean
----@field no_scope_filter table<string>
----@field no_close_buftype table<SpecialBufferType>
+---@field no_scope_filter string[]
+---@field no_close_buftype SpecialBufferType[]
 ---@field keymaps? WindovigationKeymapOptions
 
 ---@class WindovigationHiddenOptions
----@field no_scope_filter_patterns? table<string>
+---@field no_scope_filter_patterns? string[]
 ---@field no_close_buftype_map? table<SpecialBufferType, boolean>

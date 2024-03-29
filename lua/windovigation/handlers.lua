@@ -39,8 +39,6 @@ M.handle_file_entered = function(event)
 	globals.buffer_file_ids[event.buf] = file
 
 	-- Handle the no_scope_filter before scoping the file.
-	--
-	---@param value string
 	for _, value in ipairs(globals.hidden_options.no_scope_filter_patterns or {}) do
 		if string.match(file, value) ~= nil then
 			return

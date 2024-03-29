@@ -26,6 +26,14 @@ local options = {
 	-- the Neotree or git diffs.
 	prevent_switching_nofile = true,
 
+	-- The files, where their path contains one of these values,
+	-- won't be scoped in our history
+	no_scope_filter = {
+		-- This is here to workaround git diff for a split second opening some kind
+		-- of a normal looking file in /private that shouldn't be scoped.
+		"/private/var/folders*",
+	},
+
 	-- Prevents the buffer from closing, when there aren't any
 	-- of our tracked windows still scoping their file.
 	--
@@ -34,14 +42,6 @@ local options = {
 	-- For example if you wish to stop terminal buffers from
 	-- being closed, set this to {"terminal"}.
 	no_close_buftype = {},
-
-	-- The files, where their path contains one of these values,
-	-- won't be scoped in our history
-	no_scope_filter = {
-		-- This is here to workaround git diff for a split second opening some kind
-		-- of a normal looking file in /private that shouldn't be scoped.
-		"/private/var/folders*",
-	},
 
 	-- Options for the built in keymaps that get
 	-- reattached to every buffer on enter, to avoid

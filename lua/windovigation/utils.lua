@@ -1,6 +1,3 @@
--- local globals = require("windovigation.globals")
--- local history = require("windovigation.history")
-
 local M = {}
 
 ---@generic T: any
@@ -53,7 +50,6 @@ M.is_event_relevant = function(event, options)
 	return event.buf ~= nil and buftype ~= "nofile" and event.file ~= nil and event.file:len() > 0
 end
 
-
 ---@return integer?
 M.find_buf_by_name = function(name)
 	for _, buf in ipairs(vim.api.nvim_list_bufs()) do
@@ -83,7 +79,7 @@ M.absolute_path = function(path)
 end
 
 ---@generic T
----@param list table<T>
+---@param list T[]
 ---@param value T
 ---@return integer?
 M.index_of = function(list, value)
@@ -92,9 +88,9 @@ M.index_of = function(list, value)
 end
 
 ---@generic T
----@param list table<T>
+---@param list T[]
 ---@param value T
----@return table<T>
+---@return T[]
 M.append_skipping_existing = function(list, value)
 	local newList = {}
 	---@diagnostic disable-next-line: no-unknown
@@ -105,6 +101,19 @@ M.append_skipping_existing = function(list, value)
 	end
 	table.insert(newList, value)
 	return newList
+end
+
+---Transforms a list to a set like map that can be used for constant time lookup.
+---
+---@param list string[]
+---@return table<string, boolean>
+M.list_to_set = function(list)
+	local set = {} ---@type table<string, boolean>
+	---@param v string
+	for _, v in ipairs(list) do
+		set[v] = true
+	end
+	return set
 end
 
 return M
