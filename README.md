@@ -1,4 +1,4 @@
-A plugin that has Neovim windows track their open files and allows switching between them.
+A plugin for Neovim that lets you switch buffers based on window unique file history like VScode and Evil Emacs, instead of a global buffer list.
 
 # Before / After Preview
 
@@ -7,22 +7,15 @@ https://github.com/volskaya/windovigation.nvim/assets/38878482/be0bd579-ac25-4dc
 
 # Motivation
 
-By default you can't reliably jump backwards to previous buffers, when working with multiple window splits and tabs, because all of your windows keep ordering the same global buffer history.
+By default you can't reliably switch backwards to previous buffers, when working with multiple window splits and tabs, because all of your windows keep ordering the same global buffer history.
 
-For example if you return to an older window, that's showing a file you edited 4 buffers ago, if you'd jump forward to a definition in that file, let's say an enum that you need to add a new value to, then you kill that buffer or jump to previous buffer, you're now thrown to the last buffer from some other window.
+For example if you return to an older window, that's showing a file you edited 4 buffers ago, if you'd jump forward to a definition in that file, let's say an enum that you need to add a new value to, then you kill that buffer or switch to the previous buffer, you're now thrown to the last buffer from some other window.
 
 A window unique file history fixes that.
 
-It makes every window track its own file history, so if you would now jump forward to another file from an old window, you can be sure that jumping backward will return you to the previous file.
+It makes every window track its own file history, so if you would now switch forward to another file from an old window, you can be sure that switching backward will return you to the previous file.
 
 This makes it consistent with how switching is done in vim modes on VSCode and Emacs too.
-
-# Behavior
-
-- As you enter a new buffer with a file, it's added to the history of that window.
-- Switching between buffers with our movement keys selects the next buffer based on that windows file history.
-- When a buffer is written, the associated file is bumped to the front of the history.
-- Killing buffers with with our `close_file` action only closes them in the current window and does not change other windows and tabs. The buffer is only really killed when no other window has it in their history.
 
 # Installation
 
@@ -52,6 +45,28 @@ This makes it consistent with how switching is done in vim modes on VSCode and E
 }
 ```
 
+3. Add `"buffers", "blank", "help", "terminal", "winsize", "tabpages"` to your global `sessionoptions`. For this plugin to restore state properly, your window layout must match between close and restore.
+
+_If your session restoration plugin isn't wrapped around `:mksession` or ignores `sessionoptions`, refer to their README on how to handle this properly, if needed._
+
+###### Example (place it together with your other global options)
+
+```lua
+vim.opt.sessionoptions = {
+  -- Windovigation required options.
+  "buffers",
+  "help",
+  "blank",
+  "terminal",
+  "winsize",
+  "tabpages",
+  -- Other options.
+  "curdir",
+  "globals",
+  "folds",
+}
+```
+
 # Options
 
 ```lua
@@ -73,14 +88,40 @@ This makes it consistent with how switching is done in vim modes on VSCode and E
   -- use require("windovigation.actions").persist_state().
   auto_persist_state = true,
 
+  -- When toggled on, closing a file will switch to the most
+  -- recent entered file, not the recently written file.
+  after_close_file_switch_to_recent = true,
+
+  -- Prevents the move actions from working when the current
+  -- buffer type is nofile, that's usually on buffers like
+  -- the Neotree or git diffs.
+  prevent_switching_nofile = true,
+
+  -- The files, where their path contains one of these values,
+  -- won't be scoped in our history
+  no_scope_filter = {
+    -- This is here to workaround git diff for a split second opening some kind
+    -- of a normal looking file in /private that shouldn't be scoped.
+    "/private/var/folders*",
+  },
+
+  -- Prevents the buffer from closing, when there aren't any
+  -- of our tracked windows still scoping their file.
+  --
+  -- This only respects special buffer types.
+  --
+  -- For example if you wish to stop terminal buffers from
+  -- being closed, set this to {"terminal"}.
+  no_close_buftype = {},
+
   -- Options for the built in keymaps that get
   -- reattached to every buffer on enter, to avoid
   -- lazy loaded packages from stealing them.
   --
   -- Set this to nil if you wish to set keymaps by yourself.
   keymaps = {
-    bracket_movement_key = "b", -- [b, ]b, [B, ]B
-    buffer_close_key = "k", -- <leader>bk
+    bracket_movement_key = "b", -- Like [b, ]b, [B, ]B
+    buffer_close_key = "k", -- Like <leader>bk
   },
 }
 ```
@@ -128,7 +169,7 @@ require("windovigation.actions").persist_state()
 
 Integrating with your file picker is optional
 
-But it's expected that jumping to a file through a file picker or a text search, bumps the file to the front of that windows history.
+But it's expected that switching to a file through a file picker or a text search, bumps the file to the front of that windows history.
 
 In Neovim there really isn't a consistent "File Picked" event, so this case needs to be handled manually in your config with `require("windovigation.handlers").handle_file_picked`.
 
