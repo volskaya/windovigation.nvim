@@ -1,5 +1,5 @@
 local globals = require("windovigation.globals")
-local utils = require("windovigation.utils")
+local history = require("windovigation.history")
 
 local M = {}
 
@@ -94,11 +94,11 @@ M.handle_layout_change = function(options)
 	globals.state = state_after
 
 	local files_dropped = {} ---@type table<string,boolean>
-	for _, history in pairs(histories_before) do
+	for _, history_before in pairs(histories_before) do
 		---@param file string
-		for _, file in ipairs(history) do
+		for _, file in ipairs(history_before) do
 			if files_dropped[file] ~= true then
-				local did_close = utils.maybe_close_buffer_for_file(file, true)
+				local did_close = history.maybe_close_buffer_for_file(file, true)
 				if did_close then
 					files_dropped[file] = true
 				end

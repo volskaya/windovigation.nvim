@@ -1,6 +1,5 @@
-local globals = require("windovigation.globals")
-local history = require("windovigation.history")
-local options = require("windovigation.options")
+-- local globals = require("windovigation.globals")
+-- local history = require("windovigation.history")
 
 local M = {}
 
@@ -54,36 +53,6 @@ M.is_event_relevant = function(event, options)
 	return event.buf ~= nil and buftype ~= "nofile" and event.file ~= nil and event.file:len() > 0
 end
 
----This call will respect options.
----
----If the buffer isn't closed, because the options
----prevent the buftype from closing, but it's the
----last buffer in the window, close the window
----instead.
----
----@param id string | integer -- If passing string, assume it's a file, if integer - buffer id.
----@param force? boolean
----@return boolean -- True if buffer or window got closed.
-M.maybe_close_buffer_for_file = function(id, force)
-	local file = type(id) == "string" and id or nil
-	local buf = type(id) == "number" and id or nil
-
-	if file and history.is_file_scoped(file) then
-		return false
-	end
-
-	local effective_buf = buf or (file and M.find_buf_by_name(file) or nil)
-	if effective_buf then
-		local buftype = vim.bo[effective_buf].buftype
-		local prevent_close = globals.hidden_options.no_close_buftype_map[buftype] ~= nil
-
-		if prevent_close then
-			return false
-		end
-	end
-
-	return pcall(vim.cmd.bdelete, { id, bang = force or false })
-end
 
 ---@return integer?
 M.find_buf_by_name = function(name)

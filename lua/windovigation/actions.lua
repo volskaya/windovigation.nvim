@@ -43,7 +43,7 @@ M.close_current_file = function()
 
 	-- This action can be used on buffers we don't manage with our file histories.
 	if file == nil or buftype == "nofile" then
-		if not utils.maybe_close_buffer_for_file(buf, false) then
+		if not history.maybe_close_buffer_for_file(buf, false) then
 			-- Make sure we're back on buf, if bdelete didn't close any buffers.
 			vim.api.nvim_win_set_buf(win, buf)
 		end
@@ -73,7 +73,7 @@ M.close_current_file = function()
 		-- Proceeding to close a file without state.
 	end
 
-	utils.maybe_close_buffer_for_file(file, true)
+	history.maybe_close_buffer_for_file(file, true)
 end
 
 ---@param key_options? WindovigationKeyOptions
@@ -112,71 +112,87 @@ M.move_to_file = function(delta, key_options)
 	local key = history.get_current_key(key_options)
 	local buf = key_options and key_options.buf or vim.api.nvim_get_current_buf()
 	local buf_type = vim.bo[buf].buftype
-	local entry = globals.state[key]
 
 	-- Key has no state, there's nothing to move through.
-	if entry == nil then
+	if not globals.state[key] then
 		return false
 	end
 
-	local file = globals.buffer_file_ids[buf]
-	local file_before = file
-	local entry_histories = entry and entry.histories or { written = {}, entered = {} }
-	local index = nil
+	-- The loop will try to switch again if the buffer didn't change,
+	-- which we handle as file not existing or being renamed, thus
+	-- needing to be removed from the history.
+	while #globals.state[key].histories.written > 0 do
+		local entry = globals.state[key]
+		local file = globals.buffer_file_ids[buf]
+		local file_before = file
+		local entry_histories = entry and entry.histories or { written = {}, entered = {} }
+		local index = nil
 
-	-- Try to find the previous file index in the history.
-	if file ~= nil then
-		index = utils.index_of(entry_histories.written, file)
-	end
+		-- Try to find the previous file index in the history.
+		if file ~= nil then
+			index = utils.index_of(entry_histories.written, file)
+		end
 
-	local try_previous_first = false
-	local did_find_previous_index = false
+		local try_previous_first = false
+		local did_find_previous_index = false
 
-	-- Buffers of "nofile" aren't meant to be in the history, so it doesn't make
-	-- sense to use them as the middle file for backward / forward switch.
-	if buf_type == "nofile" then
-		try_previous_first = true
-	end
+		-- Buffers of "nofile" aren't meant to be in the history, so it doesn't make
+		-- sense to use them as the middle file for backward / forward switch.
+		if buf_type == "nofile" then
+			try_previous_first = true
+		end
 
-	-- Recalculate the next index.
-	if delta == "previous" or try_previous_first then
-		-- Iterate in reverse and find the last entered file we can switch to.
-		for i = #entry.histories.entered, 1, -1 do
-			local entered_file = entry.histories.entered[i] ---@type string?
-			if entered_file ~= nil and entered_file ~= file then
-				-- Find the file in the written history. If it doesn't exist there, don't switch to it.
-				index = utils.index_of(entry_histories.written, entered_file)
-				did_find_previous_index = true
-				break
+		-- Recalculate the next index.
+		if delta == "previous" or try_previous_first then
+			-- Iterate in reverse and find the last entered file we can switch to.
+			for i = #entry.histories.entered, 1, -1 do
+				local entered_file = entry.histories.entered[i] ---@type string?
+				if entered_file ~= nil and entered_file ~= file then
+					-- Find the file in the written history. If it doesn't exist there, don't switch to it.
+					index = utils.index_of(entry_histories.written, entered_file)
+					did_find_previous_index = true
+					break
+				end
 			end
 		end
-	end
 
-	if not did_find_previous_index then
-		if delta == "previous" then
-		-- The "previous" handling above didn't find anything, have this pass through to other cases.
-		elseif delta == "first" then
-			index = 1
-		elseif delta == "last" then
-			index = #entry_histories.written
-		elseif index == nil then
-			index = delta <= 0 and #entry_histories.written or 1
+		if not did_find_previous_index then
+			if delta == "previous" then
+			-- The "previous" handling above didn't find anything, have this pass through to other cases.
+			elseif delta == "first" then
+				index = 1
+			elseif delta == "last" then
+				index = #entry_histories.written
+			elseif index == nil then
+				index = delta <= 0 and #entry_histories.written or 1
+			else
+				index = index + delta
+			end
+		end
+
+		-- After recalculating the next index, we should have the next file.
+		file = entry_histories.written[index] ---@type string?
+
+		if file == file_before then
+			return false
+		elseif file ~= nil then
+			pcall(vim.cmd.buffer, { file, bang = true })
+		end
+
+		-- The vim.cmd.buffer returns success even if buffers didn't change,
+		-- so checking for change manually with id match.
+		local is_buf_changed = buf ~= vim.api.nvim_get_current_buf()
+
+		if is_buf_changed then
+			return true
+		elseif file ~= nil then
+			-- If the switch failed, probably means the file has been removed
+			-- and is no longer available. Unscope it and try switching again
+			-- with a newer history.
+			history.unscope_file(file)
 		else
-			index = index + delta
+			return false
 		end
-	end
-
-	-- After recalculating the next index, we should have the next file.
-	file = entry_histories.written[index] ---@type string?
-
-	if file ~= nil and file ~= file_before then
-		local did_switch = pcall(vim.cmd.buffer, { file, bang = true })
-		if not did_switch then
-			vim.notify("Failed to switch to the next file, falling back to :edit.", vim.log.levels.WARN)
-			vim.cmd.edit(file)
-		end
-
-		return true
 	end
 
 	return false

@@ -152,23 +152,7 @@ M.handle_buf_delete = function(event)
 		globals.buffer_file_ids[buf] = nil
 	end
 
-	-- Remove the file from all entries - its buffer is deleted.
-	for key, entry in pairs(globals.state) do
-		local written_new, did_remove = utils.remove_from_table(entry.histories.written, file)
-
-		if did_remove then
-			globals.state[key] = {
-				tab = entry.tab,
-				page = entry.page,
-				win = entry.win,
-				pane = entry.pane,
-				histories = {
-					entered = utils.remove_from_table(entry.histories.entered, file),
-					written = written_new,
-				},
-			}
-		end
-	end
+	history.unscope_file(file)
 end
 
 return M

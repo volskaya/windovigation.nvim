@@ -1,4 +1,5 @@
 local globals = require("windovigation.globals")
+local utils = require("windovigation.utils")
 
 local M = {}
 
@@ -103,6 +104,66 @@ M.move_to_front = function(file, key)
 		pane = entry_old.pane,
 		histories = histories_new,
 	}
+end
+
+--- Removes the file from all entries.
+--
+---@param file string
+---@return boolean
+M.unscope_file = function(file)
+	local did_remove_something = false
+
+	-- Remove the file from all entries.
+	for key, entry in pairs(globals.state) do
+		local written_new, did_remove = utils.remove_from_table(entry.histories.written, file)
+
+		if did_remove then
+			did_remove_something = true
+			globals.state[key] = {
+				tab = entry.tab,
+				page = entry.page,
+				win = entry.win,
+				pane = entry.pane,
+				histories = {
+					entered = utils.remove_from_table(entry.histories.entered, file),
+					written = written_new,
+				},
+			}
+		end
+	end
+
+	return did_remove_something
+end
+
+---This call will respect options.
+---
+---If the buffer isn't closed, because the options
+---prevent the buftype from closing, but it's the
+---last buffer in the window, close the window
+---instead.
+---
+---@param id string | integer -- If passing string, assume it's a file, if integer - buffer id.
+---@param force? boolean
+---@return boolean -- True if buffer or window got closed.
+M.maybe_close_buffer_for_file = function(id, force)
+	local file = type(id) == "string" and id or nil
+	local buf = type(id) == "number" and id or nil
+
+	if file and M.is_file_scoped(file) then
+		return false
+	end
+
+	local effective_buf = buf or (file and utils.find_buf_by_name(file) or nil)
+	if effective_buf then
+		local buftype = vim.bo[effective_buf].buftype
+		local prevent_close = globals.hidden_options.no_close_buftype_map[buftype] ~= nil
+
+		if prevent_close then
+			return false
+		end
+	end
+
+	return pcall(vim.cmd.bdelete, { id, bang = force or false })
 end
 
 return M
