@@ -15,6 +15,7 @@ M.handle_layout_change = function(options)
 
 	-- Any history that remains in this table will be dropped at the end of this call.
 	local histories_before = {} ---@type table<WindovigationKey, WindovigationHistory>
+	local histories_before_update = {} ---@type table<WindovigationKey, string[] | nil> -- TODO: Remove this later, this is here only for backwards compatability.
 
 	for _, entry in pairs(state_before) do
 		local key = entry.page .. "_" .. entry.pane
@@ -22,6 +23,7 @@ M.handle_layout_change = function(options)
 		window_panes_before[entry.win] = entry.pane
 		tab_pages_before[entry.tab] = entry.page
 		histories_before[key] = entry.histories
+		histories_before_update[key] = entry["history"]
 	end
 
 	local restored_file_buffers = {} ---@type table<string, integer>
@@ -64,6 +66,19 @@ M.handle_layout_change = function(options)
 			if entry_old ~= nil and histories_before[key_old] ~= nil then
 				histories = histories_before[key_old]
 				histories_before[key_old] = nil
+				histories_before[key_old] = nil
+				histories_before_update[key_old] = nil
+			elseif entry_old ~= nil and histories_before_update[key_old] ~= nil and is_restoring_state then
+				-- Handle backwards compatibility with the old history list.
+				--
+				-- If state is already restored, assume the histories have been updated.
+				histories = {
+					written = histories_before_update[key_old] or {},
+					entered = histories_before_update[key_old] or {},
+				}
+
+				histories_before[key_old] = nil
+				histories_before_update[key_old] = nil
 			end
 		end
 
@@ -95,7 +110,7 @@ M.handle_layout_change = function(options)
 
 	local files_dropped = {} ---@type table<string, boolean>
 	for _, history_before in pairs(histories_before) do
-		for _, file in ipairs(history_before.written) do
+		for _, file in ipairs(history_before.written or {}) do
 			if files_dropped[file] ~= true then
 				local did_close = history.maybe_close_buffer_for_file(file, true)
 				if did_close then
