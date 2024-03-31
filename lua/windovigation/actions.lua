@@ -118,6 +118,13 @@ M.move_to_file = function(delta, key_options)
 		return false
 	end
 
+	-- Make sure the active file has been handles as "entered" before working
+	-- with the history and indexes below.
+	require("windovigation.handlers").handle_file_entered({
+		buf = buf,
+		file = vim.api.nvim_buf_get_name(buf),
+	})
+
 	-- The loop will try to switch again if the buffer didn't change,
 	-- which we handle as file not existing or being renamed, thus
 	-- needing to be removed from the history.
@@ -199,10 +206,24 @@ M.move_to_file = function(delta, key_options)
 end
 
 M.restore_state = function()
+	local handlers = require("windovigation.handlers")
 	local stored_state = vim.g.WindovigationState
+
 	if stored_state ~= nil then
 		globals.state = vim.json.decode(stored_state) ---@type WindovigationState
 		layout.handle_layout_change({ is_restoring_state = true })
+	end
+
+	-- Go over all windows and handle them as "entered", in case the
+	-- state was restored after autocommands that scope our files and
+	-- the window's active file changed.
+	for _, tab in ipairs(vim.api.nvim_list_tabpages()) do
+		for _, win in ipairs(vim.api.nvim_tabpage_list_wins(tab)) do
+			local buf = vim.api.nvim_win_get_buf(win)
+			local file = vim.api.nvim_buf_get_name(buf)
+
+			handlers.handle_file_entered({ buf = buf, file = file })
+		end
 	end
 end
 
