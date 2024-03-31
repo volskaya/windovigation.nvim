@@ -20,12 +20,12 @@ end
 ---Closes the active file and destroys its buffer,
 ---if no other window has this file open.
 M.close_current_file = function()
-	local key, win, tab = history.get_current_key()
+	local key_data = history.get_current_key_data()
 	local buf = vim.api.nvim_get_current_buf()
 	local buftype = vim.bo[buf].buftype
 	local file = utils.buf_get_name_or_nil(buf)
-	local entry = globals.state[key]
-	local key_options = { buf = buf, win = win, tab = tab } ---@type WindovigationKeyOptions
+	local entry = globals.state[key_data.key]
+	local key_options = { buf = buf, win = key_data.win, tab = key_data.tab } ---@type WindovigationKeyOptions
 
 	-- TODO: Ask to save changes before killing the buffer.
 
@@ -45,7 +45,7 @@ M.close_current_file = function()
 	if file == nil or buftype == "nofile" then
 		if not history.maybe_close_buffer_for_file(buf, false) then
 			-- Make sure we're back on buf, if bdelete didn't close any buffers.
-			vim.api.nvim_win_set_buf(win, buf)
+			vim.api.nvim_win_set_buf(key_data.win, buf)
 		end
 		return
 	end
@@ -57,7 +57,7 @@ M.close_current_file = function()
 			written = utils.remove_from_table(histories.written, file),
 		}
 
-		globals.state[key] = {
+		globals.state[key_data.key] = {
 			tab = entry.tab,
 			page = entry.page,
 			win = entry.win,
@@ -67,7 +67,7 @@ M.close_current_file = function()
 
 		-- Close the window as there are no more files in this history.
 		if #histories_after.written == 0 then
-			pcall(vim.api.nvim_win_close, win, false) -- Closing last window will fail silently.
+			pcall(vim.api.nvim_win_close, key_data.win, false) -- Closing last window will fail silently.
 		end
 	else
 		-- Proceeding to close a file without state.
@@ -109,20 +109,20 @@ end
 ---@param key_options? WindovigationKeyOptions
 ---@return boolean
 M.move_to_file = function(delta, key_options)
-	local key = history.get_current_key(key_options)
+	local key_data = history.get_current_key_data(key_options)
 	local buf = key_options and key_options.buf or vim.api.nvim_get_current_buf()
 	local buf_type = vim.bo[buf].buftype
 
 	-- Key has no state, there's nothing to move through.
-	if not globals.state[key] then
+	if not globals.state[key_data.key] then
 		return false
 	end
 
 	-- The loop will try to switch again if the buffer didn't change,
 	-- which we handle as file not existing or being renamed, thus
 	-- needing to be removed from the history.
-	while #globals.state[key].histories.written > 0 do
-		local entry = globals.state[key]
+	while #globals.state[key_data.key].histories.written > 0 do
+		local entry = globals.state[key_data.key]
 		local file = utils.buf_get_name_or_nil(buf)
 		local file_before = file
 		local entry_histories = entry and entry.histories or { written = {}, entered = {} }

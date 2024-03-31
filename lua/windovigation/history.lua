@@ -4,18 +4,20 @@ local utils = require("windovigation.utils")
 local M = {}
 
 ---@param options? WindovigationKeyOptions
----@return WindovigationKey
----@return integer
----@return integer
----@return integer
----@return integer
-M.get_current_key = function(options)
+---@return WindovigationKeyData
+M.get_current_key_data = function(options)
 	local win = options and options.win or vim.api.nvim_get_current_win()
 	local tab = options and options.tab or vim.api.nvim_win_get_tabpage(win)
 	local page = vim.api.nvim_tabpage_get_number(tab)
 	local pane = vim.api.nvim_win_get_number(win)
 
-	return page .. "_" .. pane, win, tab, pane, page
+	return {
+		key = page .. "_" .. pane,
+		win = win,
+		tab = tab,
+		pane = pane,
+		page = page,
+	}
 end
 
 ---@param file string
@@ -100,6 +102,43 @@ M.move_to_front = function(file, key)
 		pane = entry_old.pane,
 		histories = histories_new,
 	}
+end
+
+---Scopes the file under the relevant entry for this key.
+---
+---If the entry doesn't exist, it is created.
+---
+---@param key_data WindovigationKeyData
+---@param file string
+M.scope_file = function(key_data, file)
+	local entry = globals.state[key_data.key]
+	local entry_histories = entry.histories or { entered = {}, written = {} }
+
+	-- TODO: Exract this before putting it in move_to_file.
+	if not M.is_file_scoped(file, key_data.key) then
+		table.insert(entry_histories.entered, file)
+		table.insert(entry_histories.written, file)
+
+		globals.state[key_data.key] = {
+			tab = key_data.tab,
+			page = key_data.page,
+			win = key_data.win,
+			pane = key_data.pane,
+			histories = entry_histories,
+		}
+	elseif file ~= entry_histories.entered[#entry_histories.entered] then
+		-- If the file is already scoped, only bump it in the "entered" history.
+		globals.state[key_data.key] = {
+			tab = key_data.tab,
+			page = key_data.page,
+			win = key_data.win,
+			pane = key_data.pane,
+			histories = {
+				entered = utils.append_skipping_existing(entry_histories.entered, file),
+				written = entry_histories.written,
+			},
+		}
+	end
 end
 
 --- Removes the file from all entries.

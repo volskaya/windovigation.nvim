@@ -14,9 +14,9 @@ M.handle_file_picked = function(event)
 
 	-- INFO: Should we have some special handling here for relative paths a picker might pass in?
 	local file = event.file
-	local key = history.get_current_key()
+	local key_data = history.get_current_key_data()
 
-	history.move_to_front(file, key)
+	history.move_to_front(file, key_data.key)
 end
 
 ---@param event WindovigationEvent
@@ -30,7 +30,7 @@ M.handle_file_entered = function(event)
 	end
 
 	local file = event.file
-	local key, win, tab, pane, page = history.get_current_key()
+	local key_data = history.get_current_key_data()
 
 	layout.handle_layout_change()
 
@@ -41,33 +41,7 @@ M.handle_file_entered = function(event)
 		end
 	end
 
-	local entry = globals.state[key]
-	local entry_histories = entry.histories or { entered = {}, written = {} }
-
-	if not history.is_file_scoped(file, key) then
-		table.insert(entry_histories.entered, file)
-		table.insert(entry_histories.written, file)
-
-		globals.state[key] = {
-			tab = tab,
-			page = page,
-			win = win,
-			pane = pane,
-			histories = entry_histories,
-		}
-	elseif file ~= entry_histories.entered[#entry_histories.entered] then
-		-- If the file is already scoped, only bump it in the "entered" history.
-		globals.state[key] = {
-			tab = tab,
-			page = page,
-			win = win,
-			pane = pane,
-			histories = {
-				entered = utils.append_skipping_existing(entry_histories.entered, file),
-				written = entry_histories.written,
-			},
-		}
-	end
+	history.scope_file(key_data, file)
 end
 
 ---@param event WindovigationEvent
@@ -78,21 +52,21 @@ M.handle_file_written = function(event, options)
 	end
 
 	local file = event.file
-	local key = history.get_current_key(options)
+	local key_data = history.get_current_key_data(options)
 
-	if history.is_file_scoped(file, key) then
-		history.move_to_front(file, key)
+	if history.is_file_scoped(file, key_data.key) then
+		history.move_to_front(file, key_data.key)
 	end
 end
 
 ---@param event WindovigationEvent
 ---@param tab integer
 M.handle_tab_new = function(event, tab)
-	local key = history.get_current_key({ tab = tab })
+	local key_data = history.get_current_key_data({ tab = tab })
 
 	-- For some reason the previous buffer registers in the new tab,
 	-- and pushes its file to this state entry.
-	globals.state[key] = nil
+	globals.state[key_data.key] = nil
 	layout.handle_layout_change()
 end
 
