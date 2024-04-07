@@ -1,23 +1,20 @@
-A plugin for Neovim that lets you switch buffers based on window unique file history like VScode and Evil Emacs, instead of a global buffer list.
+# 🏎️ Windovigation.nvim
 
-# Before / After Preview
+This enables you to switch buffers based on a buffer history scoped to the window split / pane, like VScode and Evil Emacs, instead of a global buffer list.
 
-https://github.com/volskaya/windovigation.nvim/assets/38878482/be0bd579-ac25-4dc0-ad70-4fc362f2c6ce
+This is a replacement for your current keymaps that you use to switch or kill buffers. And complements all the other vim like movement like cursor, definition jumps. 👌
 
+# ✨ Features
 
-# Motivation
+- **🏎️ Buffers scoped to the window** for faster, more reliable and muscle memory friendly switching.
+- **🚀 Switch** to the previous or the next buffer based on an order of which file was written in that window.
+- **🪦 Kill** a buffer to return to the previously entered file in that window.
+- **💾 Session Restoration** support for any of your session plugins.
+- **📡 Lua** api for all actions performed by the plugin.
+- **📋 Supports Tabs:** windovigation.nvim respects **Neovim** buffer > window > tab hierarchy.
+- **⌨️ Keymaps** to switch or kill buffers on `[b`, `]b`, `[B`, `]B`, `<leader>bk` that can be adjusted in the options.
 
-By default you can't reliably switch backwards to previous buffers, when working with multiple window splits and tabs, because all of your windows keep ordering the same global buffer history.
-
-For example if you return to an older window, that's showing a file you edited 4 buffers ago, if you'd jump forward to a definition in that file, let's say an enum that you need to add a new value to, then you kill that buffer or switch to the previous buffer, you're now thrown to the last buffer from some other window.
-
-A window unique file history fixes that.
-
-It makes every window track its own file history, so if you would now switch forward to another file from an old window, you can be sure that switching backward will return you to the previous file.
-
-This makes it consistent with how switching is done in vim modes on VSCode and Emacs too.
-
-# Installation
+# 📦 Installation
 
 1. Add the plugin to your config with disabled lazy loading, for example LazyVim:
 
@@ -31,7 +28,7 @@ This makes it consistent with how switching is done in vim modes on VSCode and E
 
 2. If you use a session restoration plugin that provides something like a pre save hook, you should add our `persist_state` to its config.
 
-###### For example LazyVim's default `folke/persistence.nvim`
+###### 💡 For example LazyVim's default `folke/persistence.nvim`
 
 ```lua
 {
@@ -45,11 +42,13 @@ This makes it consistent with how switching is done in vim modes on VSCode and E
 }
 ```
 
-3. Add `"buffers", "blank", "help", "terminal", "winsize", "tabpages"` to your global `sessionoptions`. For this plugin to restore state properly, your window layout must match between close and restore.
+3. Add `"buffers", "blank", "help", "terminal", "winsize", "tabpages"` to your global `sessionoptions`.
+
+_⚠️ For this plugin to restore state properly, your window layout must match between close and restore. 👆_
 
 _If your session restoration plugin isn't wrapped around `:mksession` or ignores `sessionoptions`, refer to their README on how to handle this properly, if needed._
 
-###### Example (place it together with your other global options)
+###### 💡 Example (place it together with your other global options)
 
 ```lua
 vim.opt.sessionoptions = {
@@ -67,7 +66,7 @@ vim.opt.sessionoptions = {
 }
 ```
 
-# Options
+# ⚙️ Options
 
 ```lua
 {
@@ -126,7 +125,7 @@ vim.opt.sessionoptions = {
 }
 ```
 
-# Session Restoration
+# 💾 Session Restoration
 
 By default the plugin automatically restores state on `SessionLoadPost`, that's called by Neovim when restoring a session. But you can handle this manually with lua.
 
@@ -135,7 +134,7 @@ require("windovigation.actions").persist_state()
 require("windovigation.actions").restore_state()
 ```
 
-# Default Keymaps
+# ⌨️ Default Keymaps
 
 - `[b` - Switches to the previous file.
 - `]b` - Switches to the next file.
@@ -143,7 +142,7 @@ require("windovigation.actions").restore_state()
 - `]B` - Switches to the last file.
 - `<leader>bk` - Closes the current file and destroys the buffer, if no other window has this file open.
 
-# Commands
+# 🚀 Commands
 
 - `:WindovigationPreviousFile` - Switches to the previous file.
 - `:WindovigationNextFile` - Switches to the next file.
@@ -151,7 +150,7 @@ require("windovigation.actions").restore_state()
 - `:WindovigationLastFile` - Switches to the last file.
 - `:WindovigationCloseFile` - Closes the current file and destroys the buffer, if no other window has this file open.
 
-# Lua Actions
+# 📡 Lua Actions
 
 ```lua
 require("windovigation.actions").move_to_previous_file()
@@ -165,15 +164,15 @@ require("windovigation.actions").restore_state()
 require("windovigation.actions").persist_state()
 ```
 
-# Custom File Picker Integration
+# 🔎 Custom File Picker Integration
 
-Integrating with your file picker is optional
+Integrating with your file picker is optional.
 
 But it's expected that switching to a file through a file picker or a text search, bumps the file to the front of that windows history.
 
 In Neovim there really isn't a consistent "File Picked" event, so this case needs to be handled manually in your config with `require("windovigation.handlers").handle_file_picked`.
 
-###### Example
+###### 💡 Example
 
 ```lua
 require("windovigation.handlers").handle_file_picked({
@@ -182,11 +181,11 @@ require("windovigation.handlers").handle_file_picked({
 })
 ```
 
-# Telescope Integration Example
+# 🔭 Telescope Integration Example
 
 I use Telescope, so I've included utilities that you should be able to add out of the box to your config or use it as reference.
 
-###### Telescope bultin picker example by passing `attach_mappings` to their options
+###### 💡 Telescope bultin picker example by passing `attach_mappings` to their options
 
 ```lua
 require("telescope.builtin").find_files({
@@ -195,7 +194,7 @@ require("telescope.builtin").find_files({
 })
 ```
 
-###### File browser extension by passing actions to telescope opts
+###### 💡 File browser extension by passing actions to telescope opts
 
 ```lua
 {
