@@ -15,6 +15,13 @@
 ---@field entered string[]
 ---@field written string[]
 
+---@class WindovigationKeyData
+---@field key WindovigationKey
+---@field win integer
+---@field tab integer
+---@field pane integer
+---@field page integer
+
 ---@class WindovigationKeyOptions
 ---@field isResursive? boolean
 ---@field tab? integer
