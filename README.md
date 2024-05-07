@@ -117,7 +117,7 @@ vim.opt.sessionoptions = {
   -- reattached to every buffer on enter, to avoid
   -- lazy loaded packages from stealing them.
   --
-  -- Set this to nil if you wish to set keymaps by yourself.
+  -- Set this to false if you wish to set keymaps by yourself.
   keymaps = {
     bracket_movement_key = "b", -- Like [b, ]b, [B, ]B
     buffer_close_key = "k", -- Like <leader>bk
