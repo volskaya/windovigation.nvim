@@ -114,7 +114,7 @@ local function is_options_valid(user_options)
     keymaps = {
       user_options.keymaps,
       function(value)
-        if value == nil then
+        if value == false then
           return true
         end
 

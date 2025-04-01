@@ -5,7 +5,7 @@ local M = {}
 
 ---@param buf integer?
 M.set_default_keymaps = function(buf)
-  if options.keymaps == nil then
+  if not options.keymaps then
     return
   end
 
